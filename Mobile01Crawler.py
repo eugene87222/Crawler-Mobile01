@@ -14,7 +14,8 @@ from multiprocessing import Pool
 # param: url -> url of the web page      #
 ##########################################
 def GetPageContent(url):
-    res = requests.get(url)
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    res = requests.get(url, headers=headers)
     content = BeautifulSoup(res.text)
     return content
 
@@ -25,28 +26,28 @@ def GetPageContent(url):
 def GetAllTopic(url):
     content = GetPageContent(url)
 
-    all_topic = content.find('div', {'id':'top-menu'}).findAll('li')
+    all_topic = content.select_one('#top-menu').select('li')
     all_topic = [each for each in all_topic if 'topiclist' in each.find('a')['href'] or 'waypointtopiclist' in each.find('a')['href']]
     
-    file = open('topic_list.txt', 'w')
     topic_dict = dict()
     idx = 0
-    for each in all_topic:
-        topic_link = each.find('a')['href']
-        topic_page = GetPageContent('https://www.mobile01.com/' + topic_link)
-        nav = topic_page.findAll('p', {'class':'nav'})[0].text
-        start = nav.find('»')
-        topic_name = nav[start+1:].lstrip().rstrip()
-        while ' » ' in topic_name:
-            topic_name = topic_name.replace(' » ', '>')
-        while ' ' in topic_name:
-            topic_name = topic_name.replace(' ', '')
+    with open('topic_list_.txt', 'w') as file:
+        for each in all_topic:
+            topic_link = each.find('a')['href']
+            topic_page = GetPageContent('https://www.mobile01.com/'+topic_link)
+            nav = topic_page.select('p.nav')[0].text
+            start = nav.find('»')
+            topic_name = nav[start+1:].lstrip().rstrip()
+            while ' » ' in topic_name:
+                topic_name = topic_name.replace(' » ', '>')
+            while ' ' in topic_name:
+                topic_name = topic_name.replace(' ', '')
 
-        topic_dict[str(idx)] = [topic_link, topic_name]
-        file.write(str(idx) + ' ' + topic_link + ' ' + topic_name + '\n')
-        idx += 1
+            topic_dict[str(idx)] = [topic_link, topic_name]
+            file.write(f'{idx} {topic_link} {topic_name}\n')
+            print(f'{idx} {topic_link} {topic_name}\n')
+            idx += 1
 
-    file.close()
     return topic_dict
 
 #################################
@@ -64,12 +65,12 @@ def ReadTopic():
 # 取得該分類文章總頁數
 def GetTotalPageNum(url):
     content = GetPageContent('https://www.mobile01.com/' + url)
-    pagination = content.findAll('div', {'class':'pagination'}) # "[1][2][3]...下一頁"這行
+    pagination = content.select('div.pagination') # "[1][2][3]...下一頁"這行
     if pagination:
-        page_link = pagination[1].findAll('a')
+        page_link = pagination[1].select('a')
         if page_link:
             last_page = page_link[-1]['href']           # 該行的最後一個按鈕就是最後一頁的網址
-            replace = url+'&p='
+            replace = url + '&p='
             total_page = last_page.replace(replace, '') # 把前面的字串過濾掉，只要網址後面的數字 (頁數)
         else:
             total_page = 1

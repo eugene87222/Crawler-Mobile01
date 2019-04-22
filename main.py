@@ -6,7 +6,7 @@ def main():
     topic_dict = MCrawler.ReadTopic()
 
     print(u'Which topic would you want to crawl?')
-    idx = input('Input the number in front of the topic (see topic_list.txt):').lstrip().rstrip()
+    idx = input('Input the number in front of the topic (see topic_list.txt): ').strip()
     total_page_num = int(MCrawler.GetTotalPageNum(topic_dict[idx][0]))
 
     print(u'Topic {{ {} }} has {} pages in total.'.format(topic_dict[idx][1], total_page_num))
@@ -31,7 +31,6 @@ def main():
         ans = input('Save to excel? [yes/no]:')
         if ans.lower() == 'yes':
             MCrawler.Save2Excel(posts_data)
-            
 
 if __name__ == '__main__':
     main()
